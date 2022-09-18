@@ -1,0 +1,42 @@
+version: "3.2"
+
+services:
+  db:
+    container_name: Postgres
+    image: postgres
+    environment:
+      - POSTGRES_DB=julo-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 10s
+      retries: 120
+
+    ports:
+      - 5432:5432
+
+  api:
+    container_name: mini_wallet
+    environment:
+      - POSTGRES_NAME=julo-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - DOCKER=True
+    build:
+      context: ../
+      dockerfile: ./deployment/images/Dockerfile
+    command: sh "./deployment/scripts/entrypoint.sh"
+    volumes:
+      - ../:/code
+    ports:
+      - "8000:8000"
+    restart: on-failure
+    depends_on:
+      - db
+    links:
+      - db
